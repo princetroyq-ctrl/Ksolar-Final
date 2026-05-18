@@ -1,0 +1,4 @@
+{
+  "version": "1.2.2",
+  "notes": "Supabase reconnected\n\u2022 Database back on\n\u2022 Email verification disabled at the project level to bypass Resend\n\u2022 Admin still approves all signups before they can log in"
+}
