@@ -1,4 +1,4 @@
 {
-  "version": "1.2.2",
-  "notes": "Supabase reconnected\n\u2022 Database back on\n\u2022 Email verification disabled at the project level to bypass Resend\n\u2022 Admin still approves all signups before they can log in"
+  "version": "1.3.0",
+  "notes": "Multi-tenant signup\n\u2022 Personal accounts: email verify \u2192 instant login\n\u2022 Company workers: must use registered company email domain\n\u2022 Companies admin tab (super admin only)\n\u2022 Workers still require K-Solar admin approval after email verify"
 }

@@ -1,19 +1,20 @@
-# K-Solar v1.2.2 — Database mode, email-confirmation OFF
+# K-Solar v1.3.0 — Multi-tenant signup
 
-This build connects to Supabase. Before testing:
+## What's new
+- Personal accounts: sign up with any email, email verify, log in immediately
+- Company workers: must use email matching a registered company domain
+- New "Companies" admin tab (super admin only)
+- Workers still require K-Solar admin approval after email verification
 
-In Supabase dashboard:
-- Authentication -> Providers -> Email -> Confirm email: OFF -> Save
+## Before deploying
+1. Run `migration-v1.3.sql` in Supabase SQL Editor (idempotent, safe to re-run)
+2. Replace index.html and version.json in GitHub
+3. Vercel auto-deploys
 
-Without that, signup will fail because Supabase tries to send a verification
-email and hits its 2/hour rate limit.
+## After deploying — first thing to do
+Log in as super admin, go to Companies tab, register your first company:
+- Name: Kalonga SunPower & Electrical Services
+- Email Domain: kalongasunpower.mw (or whatever your domain is)
+- Address: optional
 
-## How signup works
-1. User fills the form, clicks Sign Up
-2. Supabase creates auth user + profile row in one go
-3. Status is 'pending' so login is blocked until admin approves
-4. Admin approves in Users tab -> user can sign in
-
-## Default admin
-Created manually in Supabase dashboard (Authentication -> Users + matching
-profile row with is_admin=true, status='approved').
+Then workers can sign up with @kalongasunpower.mw emails.

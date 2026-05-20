@@ -1641,6 +1641,7 @@
     </div>
     <nav class="admin-nav">
       <button class="admin-nav-tab active" data-admin-tab="overview">Overview</button>
+      <button class="admin-nav-tab" data-admin-tab="companies">Companies</button>
       <button class="admin-nav-tab" data-admin-tab="users">Users</button>
       <button class="admin-nav-tab" data-admin-tab="activity">Activity Log</button>
       <button class="admin-nav-tab" data-admin-tab="calculations">Calculations</button>
@@ -1661,6 +1662,22 @@
       <div class="admin-section">
         <h3>Pending Approvals</h3>
         <div id="admin-pending-approvals"></div>
+      </div>
+    </section>
+
+    <!-- COMPANIES -->
+    <section class="admin-tab hidden" data-admin-tab="companies">
+      <div class="admin-section">
+        <div class="admin-section-head">
+          <h3>Registered Companies</h3>
+          <button class="admin-action approve" onclick="openCompanyForm()" style="padding:0.5rem 0.9rem;">+ Add Company</button>
+        </div>
+        <p style="font-size:0.78rem; color:var(--text-dim); margin-bottom:1rem; line-height:1.5;">
+          Companies registered here allow their employees to sign up as workers using
+          a matching email domain. Workers still require K-Solar admin approval after
+          email verification.
+        </p>
+        <div id="admin-companies-list"></div>
       </div>
     </section>
 
@@ -1997,18 +2014,6 @@
           <div class="result-detail" id="r-battery-detail">—</div>
         </div>
       </div>
-
-      <div class="result-block">
-        <div class="result-icon wire">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12c3 0 3-4 6-4s3 8 6 8 3-4 6-4"/></svg>
-        </div>
-        <div class="result-content">
-          <div class="result-label">Wiring & Protection</div>
-          <div class="result-primary" id="r-wire">—</div>
-          <div class="result-secondary" id="r-breaker">—</div>
-          <div class="result-detail" id="r-protection">—</div>
-        </div>
-      </div>
     </div>
 
     <div id="warnings"></div>
@@ -2016,8 +2021,8 @@
     <div class="info-card">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
       <div>
-        <p><strong>Compliance:</strong> Sized per IEC 62124 (PV systems), IEC 61215 (modules), IEC 62109 (inverters), IEC 61427 (batteries). Wiring per MBS 753.</p>
-        <p><strong>Required:</strong> Final commissioning by MERA-licensed installer. Site survey, earthing test, and first-fault loop impedance test mandatory.</p>
+        <p><strong>Compliance:</strong> Sized per IEC 62124 (PV systems), IEC 61215 (modules), IEC 62109 (inverters), IEC 61427 (batteries).</p>
+        <p><strong>Required:</strong> Final commissioning by a MERA-licensed installer. All protection equipment and cable sizing to be specified on-site by a qualified electrician.</p>
       </div>
     </div>
   </aside>
@@ -2037,6 +2042,35 @@
       <button onclick="closeUserDetail()" style="background:transparent; border:1px solid var(--border); color:var(--text); padding:0.4rem 0.8rem; border-radius:8px; cursor:pointer; font-size:0.78rem;">Close</button>
     </div>
     <div id="user-detail-body"></div>
+  </div>
+</div>
+
+<!-- Company Add/Edit modal -->
+<div id="company-form-modal" class="user-detail-modal">
+  <div class="user-detail-card" style="max-width:480px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
+      <h3 style="color:var(--amber-50); font-size:1.15rem;" id="company-form-title">Add Company</h3>
+      <button onclick="closeCompanyForm()" style="background:transparent; border:1px solid var(--border); color:var(--text); padding:0.4rem 0.8rem; border-radius:8px; cursor:pointer; font-size:0.78rem;">Cancel</button>
+    </div>
+    <div class="field">
+      <label>Company Name <span style="color:var(--red);">*</span></label>
+      <input type="text" id="company-form-name" placeholder="Kalonga SunPower & Electrical Services" />
+    </div>
+    <div class="field">
+      <label>Email Domain <span style="color:var(--red);">*</span></label>
+      <input type="text" id="company-form-domain" placeholder="kalongasunpower.mw" />
+      <div class="helper-text">
+        Just the domain, no "@". Workers must use emails ending in this domain.
+        Example: <code>kalongasunpower.mw</code> allows <code>any.name@kalongasunpower.mw</code>.
+      </div>
+    </div>
+    <div class="field">
+      <label>Company Address (optional)</label>
+      <input type="text" id="company-form-address" placeholder="P.O. Box 1234, Lilongwe" />
+    </div>
+    <button class="auth-btn" onclick="saveCompany()">Save Company</button>
+    <div id="company-form-msg" class="auth-msg hidden"></div>
+    <input type="hidden" id="company-form-id" value="" />
   </div>
 </div>
 
@@ -2577,17 +2611,8 @@ function render() {
     batteryBlock.classList.add("hidden-block");
   }
 
-  // Wiring
-  document.getElementById("r-wire").textContent = `${r.wiring.acCable.mm2} mm² AC`;
-  document.getElementById("r-breaker").textContent = `${r.wiring.acBreaker}A MCB · ${r.wiring.acDesignCurrent.toFixed(0)}A design`;
-  let protection = "Type II SPD · 30mA RCD · Earthing per IEC 62561";
-  if (r.wiring.dcCableInfo) {
-    protection = `DC: ${r.wiring.dcCableInfo.mm2}mm² · ${protection}`;
-  }
-  if (r.wiring.battCableInfo) {
-    protection = `Batt: ${r.wiring.battCableInfo.mm2}mm² · ${protection}`;
-  }
-  document.getElementById("r-protection").textContent = protection;
+  // Protection equipment recommendations removed — to be specified by qualified
+  // electrician during installation. Calculation still runs internally.
 
   // Warnings
   const warnDiv = document.getElementById("warnings");
@@ -2723,19 +2748,12 @@ function exportReport() {
   }
   lines.push("CABLING & PROTECTION (per MBS 753 / IEC 60364)");
   lines.push("-".repeat(70));
-  lines.push("AC output cable:      " + r.wiring.acCable.mm2 + " mm² Cu (rated " + r.wiring.acCable.ampacity + "A)");
-  lines.push("AC main breaker:      " + r.wiring.acBreaker + "A MCB");
-  if (r.wiring.dcCableInfo) {
-    lines.push("DC PV cable:          " + r.wiring.dcCableInfo.mm2 + " mm² Cu (carries " +
-      r.wiring.dcCableInfo.current.toFixed(1) + "A)");
-  }
-  if (r.wiring.battCableInfo) {
-    lines.push("Battery cable:        " + r.wiring.battCableInfo.mm2 + " mm² Cu (carries " +
-      r.wiring.battCableInfo.current.toFixed(1) + "A)");
-  }
-  lines.push("Surge protection:     Type II SPD on DC + AC");
-  lines.push("RCD:                  30 mA RCBO on AC output");
-  lines.push("Earthing:             Per IEC 62561 — equipotential bonding required");
+  lines.push("Electrical protection:  All protective equipment (breakers, RCDs, surge");
+  lines.push("                        protection, earthing) to be specified and installed by");
+  lines.push("                        a MERA-licensed electrician based on site conditions.");
+  lines.push("Cable sizing:           To be determined by site survey based on actual cable");
+  lines.push("                        run length, ambient temperature, and installation method.");
+  lines.push("                        Refer to IEC 60364 / MBS 753 for ampacity and voltage drop.");
   lines.push("");
   lines.push("LOAD INVENTORY");
   lines.push("-".repeat(70));
@@ -2755,8 +2773,6 @@ function exportReport() {
   lines.push("-".repeat(70));
   lines.push("• Installation by MERA-licensed solar PV installer.");
   lines.push("• Site survey and roof structural assessment required before mounting.");
-  lines.push("• First-fault loop impedance test mandatory.");
-  lines.push("• Earthing resistance must be < 5Ω.");
   lines.push("• System commissioning report submitted to MERA.");
   lines.push("• Annual maintenance: panel cleaning, terminal torque check, battery SoH test.");
   lines.push("");
@@ -2997,24 +3013,13 @@ function exportPDF() {
     y = doc.lastAutoTable.finalY + 6;
   }
 
-  // ---- Cabling & Protection ----
+  // ---- Site-specified components ----
   if (y > pageH - 60) { doc.addPage(); y = 20; }
-  sectionHeader("CABLING & PROTECTION (per MBS 753 / IEC 60364)");
+  sectionHeader("SITE-SPECIFIED COMPONENTS");
   const wireBody = [
-    ["AC output cable", r.wiring.acCable.mm2 + " mm² Cu (rated " + r.wiring.acCable.ampacity + " A)"],
-    ["AC main breaker", r.wiring.acBreaker + " A MCB"],
+    ["Electrical protection", "All protective equipment (breakers, RCDs, surge protection,\nearthing) to be specified and installed by a MERA-licensed\nelectrician based on site conditions."],
+    ["Cable sizing", "To be determined by site survey (run length, ambient temp,\ninstallation method per IEC 60364)."],
   ];
-  if (r.wiring.dcCableInfo) {
-    wireBody.push(["DC PV cable", r.wiring.dcCableInfo.mm2 + " mm² Cu (carries " + r.wiring.dcCableInfo.current.toFixed(1) + " A)"]);
-  }
-  if (r.wiring.battCableInfo) {
-    wireBody.push(["Battery cable", r.wiring.battCableInfo.mm2 + " mm² Cu (carries " + r.wiring.battCableInfo.current.toFixed(1) + " A)"]);
-  }
-  wireBody.push(
-    ["Surge protection", "Type II SPD on DC + AC"],
-    ["RCD", "30 mA RCBO on AC output"],
-    ["Earthing", "Per IEC 62561 — equipotential bonding required"],
-  );
   doc.autoTable({
     startY: y,
     body: wireBody,
@@ -3090,8 +3095,6 @@ function exportPDF() {
   const reqs = [
     "Installation by MERA-licensed solar PV installer.",
     "Site survey and roof structural assessment required before mounting.",
-    "First-fault loop impedance test mandatory.",
-    "Earthing resistance must be < 5Ω.",
     "System commissioning report submitted to MERA.",
     "Annual maintenance: panel cleaning, terminal torque check, battery SoH test.",
   ];
@@ -3195,7 +3198,7 @@ init();
 // Bump APP_VERSION here when you ship a new build.
 // Host a /version.json on your origin (Vercel) with shape:
 //   { "version": "1.1.0", "notes": "What's new...", "url": "(optional override)" }
-const APP_VERSION = "1.2.2";
+const APP_VERSION = "1.3.0";
 
 async function checkForUpdates(showUI) {
   if (showUI) openUpdateModal("checking", "Checking for updates...", "Reaching out to the server.");
@@ -3572,7 +3575,9 @@ function profileRowToUser(profile, authUser) {
     address: profile.company_address || "",
     position: profile.job_position || "",
     photo: profile.photo_data || null,
-    isAdmin: !!profile.is_admin,
+    isAdmin: !!profile.is_admin || profile.role === "super_admin",
+    role: profile.role || "personal",
+    companyId: profile.company_id || null,
     status: profile.status || "pending",
     createdAt: profile.created_at ? new Date(profile.created_at).getTime() : Date.now(),
     verified: !!authUser?.email_confirmed_at,
@@ -3800,7 +3805,7 @@ async function handleSignup() {
   const position = document.getElementById("signup-position").value.trim();
   const accountType = document.querySelector('.account-type-group .pill.active').dataset.account;
 
-  // Validation
+  // ----- Basic validation -----
   if (!_signupPhotoData) {
     showAuthMsg("signup-msg", "error", "Please upload a profile photo. This is required for account tracing.");
     return;
@@ -3827,6 +3832,33 @@ async function handleSignup() {
     return;
   }
 
+  // ----- Company email domain validation (only for Company Email account type) -----
+  // Workers must sign up using an email whose domain matches a registered company.
+  // Personal accounts skip this entirely.
+  let matchedCompanyId = null;
+  let userRole = "personal";
+  if (accountType === "company") {
+    showAuthMsg("signup-msg", "info", "Verifying your company email domain...");
+    const emailDomain = email.split("@")[1];
+    const { data: companies, error: lookupError } = await sb
+      .from("companies")
+      .select("id, name, email_domain")
+      .eq("email_domain", emailDomain);
+    if (lookupError) {
+      showAuthMsg("signup-msg", "error", "Could not verify company. Try again. (" + lookupError.message + ")");
+      return;
+    }
+    if (!companies || companies.length === 0) {
+      showAuthMsg("signup-msg", "error",
+        "Your email domain (@" + emailDomain + ") is not registered with K-Solar. " +
+        "Please contact Kalonga SunPower to register your company, " +
+        "or sign up as a Personal account instead.");
+      return;
+    }
+    matchedCompanyId = companies[0].id;
+    userRole = "worker";
+  }
+
   showAuthMsg("signup-msg", "info", "Creating your account...");
 
   // ----- Create the auth user (Supabase will email a verification link) -----
@@ -3834,7 +3866,7 @@ async function handleSignup() {
     email,
     password,
     options: {
-      data: { full_name: name },  // stored in auth.users user_metadata
+      data: { full_name: name },
     },
   });
 
@@ -3850,11 +3882,10 @@ async function handleSignup() {
   }
 
   // ----- Insert the matching profiles row -----
-  // We need a session to satisfy RLS (auth.uid() = id). Supabase signUp returns a session
-  // when email confirmation is OFF, but otherwise we need to insert with a temporary session.
-  // The trick: signUp returns the user immediately AND a session token, so we can insert.
-  // If a session isn't returned (email confirmation requires login first), we attempt
-  // the insert anyway — the SDK will use the just-issued tokens.
+  // Personal accounts are auto-approved (status='approved') so they log in immediately
+  // after clicking the email verification link.
+  // Workers are 'pending' until super admin approves them.
+  const profileStatus = (userRole === "personal") ? "approved" : "pending";
 
   const { error: profileError } = await sb.from("profiles").insert({
     id: userId,
@@ -3866,11 +3897,12 @@ async function handleSignup() {
     job_position: position || null,
     photo_data: _signupPhotoData,
     is_admin: false,
-    status: "pending",
+    status: profileStatus,
+    role: userRole,
+    company_id: matchedCompanyId,
   });
 
   if (profileError) {
-    // If duplicate, ignore. Otherwise warn.
     console.error("Profile insert error:", profileError);
     if (!profileError.message?.includes("duplicate")) {
       showAuthMsg("signup-msg", "error", "Account created but profile setup failed: " + profileError.message);
@@ -3878,11 +3910,19 @@ async function handleSignup() {
     }
   }
 
-  // If Supabase requires email confirmation, the session won't persist — sign out cleanly
+  // Sign out so user has to confirm email and log in fresh.
   await sb.auth.signOut();
 
-  showAuthMsg("signup-msg", "success",
-    "Account created. An admin will review and approve your account. You'll be able to log in once approved.");
+  // ----- Tailored success messages by role -----
+  if (userRole === "personal") {
+    showAuthMsg("signup-msg", "success",
+      "Account created! Check your email for a verification link. " +
+      "Once verified, you can log in immediately.");
+  } else {
+    showAuthMsg("signup-msg", "success",
+      "Account created! Check your email for a verification link. " +
+      "After verifying, a K-Solar administrator will review and approve your account.");
+  }
 
   // Clear form
   ["signup-name","signup-email","signup-phone","signup-password","signup-company","signup-address","signup-position"]
@@ -4002,11 +4042,156 @@ function switchAdminTab(tabName) {
     s.classList.toggle("hidden", s.dataset.adminTab !== tabName);
   });
   if (tabName === "overview") renderAdminOverview();
+  else if (tabName === "companies") renderAdminCompanies();
   else if (tabName === "users") renderAdminUsers();
   else if (tabName === "activity") renderAdminActivity();
   else if (tabName === "calculations") renderAdminCalculations();
   else if (tabName === "profile") renderAdminProfile();
 }
+
+// ==========================================================
+// COMPANIES (super admin only)
+// ==========================================================
+async function loadCompanies() {
+  const { data, error } = await sb
+    .from("companies")
+    .select("*")
+    .order("name", { ascending: true });
+  if (error) {
+    console.error("loadCompanies error:", error);
+    return [];
+  }
+  return data || [];
+}
+
+async function renderAdminCompanies() {
+  const container = document.getElementById("admin-companies-list");
+  if (!container) return;
+  container.innerHTML = `<div class="empty-state">Loading...</div>`;
+  const companies = await loadCompanies();
+  if (companies.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        No companies registered yet. Click "+ Add Company" to register the first one.
+      </div>`;
+    return;
+  }
+  // Count workers per company
+  const { data: workerRows } = await sb.from("profiles").select("company_id, status").not("company_id", "is", null);
+  const workerCounts = {};
+  (workerRows || []).forEach(w => {
+    if (!workerCounts[w.company_id]) workerCounts[w.company_id] = { total: 0, approved: 0, pending: 0 };
+    workerCounts[w.company_id].total++;
+    if (w.status === "approved") workerCounts[w.company_id].approved++;
+    if (w.status === "pending") workerCounts[w.company_id].pending++;
+  });
+  const rows = companies.map(c => {
+    const wc = workerCounts[c.id] || { total: 0, approved: 0, pending: 0 };
+    return `
+      <tr>
+        <td>
+          <strong>${escapeHtml(c.name)}</strong><br>
+          <span style="font-size:0.72rem; color:var(--text-dim); font-family:'JetBrains Mono', monospace;">@${escapeHtml(c.email_domain)}</span>
+        </td>
+        <td style="font-size:0.78rem; color:var(--text-dim);">${escapeHtml(c.address || "—")}</td>
+        <td>
+          <strong>${wc.total}</strong> workers<br>
+          <span style="font-size:0.7rem; color:var(--text-dim);">${wc.approved} approved · ${wc.pending} pending</span>
+        </td>
+        <td style="font-size:0.72rem; color:var(--text-dim);">${new Date(c.created_at).toLocaleDateString()}</td>
+        <td>
+          <button class="admin-action view" onclick="openCompanyForm('${escapeAttr(c.id)}')">Edit</button>
+          <button class="admin-action delete" onclick="deleteCompany('${escapeAttr(c.id)}', '${escapeAttr(c.name)}')">Delete</button>
+        </td>
+      </tr>`;
+  }).join("");
+  container.innerHTML = `
+    <table class="user-table">
+      <thead><tr><th>Company</th><th>Address</th><th>Workers</th><th>Created</th><th>Actions</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+async function openCompanyForm(companyId) {
+  document.getElementById("company-form-id").value = companyId || "";
+  hideAuthMsg("company-form-msg");
+  if (companyId) {
+    // Edit mode — fetch existing
+    const { data, error } = await sb.from("companies").select("*").eq("id", companyId).maybeSingle();
+    if (error || !data) { showToast("Could not load company", "error"); return; }
+    document.getElementById("company-form-title").textContent = "Edit Company";
+    document.getElementById("company-form-name").value = data.name || "";
+    document.getElementById("company-form-domain").value = data.email_domain || "";
+    document.getElementById("company-form-address").value = data.address || "";
+  } else {
+    // Add mode
+    document.getElementById("company-form-title").textContent = "Add Company";
+    document.getElementById("company-form-name").value = "";
+    document.getElementById("company-form-domain").value = "";
+    document.getElementById("company-form-address").value = "";
+  }
+  document.getElementById("company-form-modal").classList.add("show");
+}
+
+function closeCompanyForm() {
+  document.getElementById("company-form-modal").classList.remove("show");
+}
+
+async function saveCompany() {
+  const id = document.getElementById("company-form-id").value;
+  const name = document.getElementById("company-form-name").value.trim();
+  let domain = document.getElementById("company-form-domain").value.trim().toLowerCase();
+  const address = document.getElementById("company-form-address").value.trim();
+  if (!name) { showAuthMsg("company-form-msg", "error", "Company name is required."); return; }
+  if (!domain) { showAuthMsg("company-form-msg", "error", "Email domain is required."); return; }
+  // Strip leading @ if present
+  if (domain.startsWith("@")) domain = domain.substring(1);
+  // Basic domain validation: contains a dot, no spaces, no @
+  if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(domain)) {
+    showAuthMsg("company-form-msg", "error", "Domain looks invalid. Use a format like \"example.com\" or \"company.co.mw\".");
+    return;
+  }
+  const payload = { name, email_domain: domain, address: address || null };
+  let result;
+  if (id) {
+    result = await sb.from("companies").update(payload).eq("id", id);
+  } else {
+    payload.created_by = _currentUser?.id || null;
+    result = await sb.from("companies").insert(payload);
+  }
+  if (result.error) {
+    const msg = result.error.message || "Failed to save company.";
+    if (msg.toLowerCase().includes("duplicate")) {
+      showAuthMsg("company-form-msg", "error", "A company with that email domain is already registered.");
+    } else {
+      showAuthMsg("company-form-msg", "error", msg);
+    }
+    return;
+  }
+  await logActivity("admin", id ? "Edited company" : "Added company", { company: name, domain });
+  closeCompanyForm();
+  renderAdminCompanies();
+  showToast("Company saved", "success");
+}
+
+async function deleteCompany(companyId, companyName) {
+  // Check if any workers belong to this company first
+  const { data: workers } = await sb.from("profiles").select("id").eq("company_id", companyId);
+  const workerCount = (workers || []).length;
+  let confirmMsg = `Delete company "${companyName}"?`;
+  if (workerCount > 0) {
+    confirmMsg += `\n\n${workerCount} worker account(s) currently belong to this company. ` +
+      `Deleting will leave them as unaffiliated. They can still log in but won't be linked to any company. ` +
+      `Continue?`;
+  }
+  if (!confirm(confirmMsg)) return;
+  const { error } = await sb.from("companies").delete().eq("id", companyId);
+  if (error) { showToast(error.message, "error"); return; }
+  await logActivity("admin", "Deleted company", { company: companyName });
+  renderAdminCompanies();
+  showToast("Company deleted", "success");
+}
+
 
 async function renderAdminOverview() {
   document.getElementById("admin-stats").innerHTML = `<div class="empty-state">Loading...</div>`;
@@ -5015,24 +5200,26 @@ function buildBOQItems() {
     unit: "set",
   });
 
-  // Cabling
+  // Cabling — sizing intentionally left to be determined by site survey.
+  // Estimated lengths shown so installer has a starting quantity; sizes per
+  // IEC 60364 / MBS 753 based on actual cable run and ambient conditions.
   items.push({
     category: "Cabling",
-    description: `DC PV cable ${r.wiring.dcCableInfo ? r.wiring.dcCableInfo.mm2 : 4} mm² Cu solar (red+black, UV-resistant)`,
+    description: "DC PV cable Cu solar (red+black, UV-resistant) — size by site survey",
     qty: Math.max(50, r.pv.numPanels * 8),
     unit: "metres",
   });
   items.push({
     category: "Cabling",
-    description: `AC output cable ${r.wiring.acCable.mm2} mm² Cu (rated ${r.wiring.acCable.ampacity}A)`,
+    description: "AC output cable Cu — size by site survey",
     qty: 30,
     unit: "metres",
   });
-  if (r.wiring.battCableInfo) {
+  if (r.battery && r.battery.totalBatteries > 0) {
     items.push({
       category: "Cabling",
-      description: `Battery interconnect cable ${r.wiring.battCableInfo.mm2} mm² Cu (high-current, short)`,
-      qty: Math.max(2, r.battery ? r.battery.totalBatteries : 2),
+      description: "Battery interconnect cable Cu (high-current, short) — size by site survey",
+      qty: Math.max(2, r.battery.totalBatteries),
       unit: "metres",
     });
   }
@@ -5047,47 +5234,9 @@ function buildBOQItems() {
     });
   }
 
-  // Protection
-  items.push({
-    category: "Protection",
-    description: `${r.wiring.acBreaker}A AC main MCB`,
-    qty: 1,
-    unit: "pcs",
-  });
-  items.push({
-    category: "Protection",
-    description: "Type II DC surge protection device (SPD)",
-    qty: 1,
-    unit: "pcs",
-  });
-  items.push({
-    category: "Protection",
-    description: "Type II AC surge protection device (SPD)",
-    qty: 1,
-    unit: "pcs",
-  });
-  items.push({
-    category: "Protection",
-    description: "30 mA RCBO (residual current device) on AC output",
-    qty: 1,
-    unit: "pcs",
-  });
-  if (state.mode !== "gridtied") {
-    items.push({
-      category: "Protection",
-      description: `DC isolator switch rated for ${state.systemVoltage}V system`,
-      qty: 1,
-      unit: "pcs",
-    });
-  }
-
-  // Earthing
-  items.push({
-    category: "Earthing",
-    description: "Copper earth rod 1.2m + earthing cable & clamps · IEC 62561",
-    qty: 1,
-    unit: "set",
-  });
+  // Protection equipment (breakers, RCDs, surge protection, earthing) and DC
+  // isolators are intentionally omitted from the BOQ — they must be specified
+  // by a MERA-licensed electrician based on site conditions.
 
   // Enclosure
   items.push({
@@ -5133,7 +5282,7 @@ function buildBOQItems() {
     });
     items.push({
       category: "Customer Meters",
-      description: "Customer ready board (MCB + RCBO + earth bar)",
+      description: "Customer ready board (consumer unit)",
       qty: 20,
       unit: "pcs",
     });
