@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>K-Solar</title>
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #0a0e1a 0%, #1a2332 50%, #0f1d2e 100%);
+      color: #fef3c7;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+    .container { padding: 2rem; }
+    h1 { color: #f59e0b; }
+    p { color: rgba(254,243,199,0.65); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Loading K-Solar...</h1>
+    <p>Connecting to ksolar.online</p>
+  </div>
+  <script>
+    // Capacitor will redirect to server.url; this is the fallback.
+    setTimeout(() => {
+      window.location.href = "https://ksolar.online";
+    }, 100);
+  </script>
+</body>
+</html>

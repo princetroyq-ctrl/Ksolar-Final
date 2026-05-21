@@ -1,0 +1,140 @@
+# K-Solar Android App
+
+This folder contains everything needed to build the K-Solar Android APK
+without installing Android Studio. The build runs in GitHub Actions
+(GitHub's free cloud build service) and produces an APK file you can
+install directly on your phone.
+
+## What this app does
+
+It's a thin native Android wrapper around your live K-Solar web app at
+**https://ksolar.online**. Users get:
+
+- App icon on their home screen
+- Full-screen app (no browser bars)
+- Splash screen on launch
+- Same login, same calculator, same features as the web app
+
+The app loads the latest version of K-Solar from ksolar.online on launch,
+so any update you push to your GitHub repo for the web app is
+automatically reflected in the Android app — no APK rebuild needed for
+content/code changes.
+
+## Configuration
+
+- **App ID:** `online.ksolar.app`
+- **App Name:** `K-Solar`
+- **Min Android version:** Android 7.0 (API 24)
+- **Target Android version:** Latest stable (configured by Capacitor)
+- **Server URL:** `https://ksolar.online`
+
+## How to set this up — one-time, 15 minutes
+
+### Step 1: Add these files to your GitHub repo
+
+Put this entire `k-solar-android/` folder into a folder named `android-app/`
+at the root of your `Ksolar-Final` GitHub repo. Final structure should look like:
+
+```
+Ksolar-Final/
+├── index.html              <-- your web app
+├── version.json
+├── README.md
+├── android-app/            <-- this folder
+│   ├── android-resources/  <-- icons + splash
+│   ├── www/                <-- placeholder html
+│   ├── capacitor.config.json
+│   ├── package.json
+│   └── ...
+└── .github/
+    └── workflows/
+        └── build-android.yml   <-- copied from this folder
+```
+
+**Important:** the GitHub Actions workflow file must go in `.github/workflows/`
+at the root of your repo, NOT inside `android-app/`. Move it there
+(or in this folder it's called `.github-workflows/build-android.yml` — rename
+the dot-hyphen to a slash when uploading).
+
+### Step 2: Trigger the build
+
+1. Go to your repo on GitHub
+2. Click the **Actions** tab (top menu)
+3. Find **"Build K-Solar Android APK"** in the left sidebar
+4. Click **Run workflow** button (top right)
+5. Click the green **Run workflow** button in the dropdown
+6. Wait ~5 minutes for the build to complete
+
+### Step 3: Download the APK
+
+1. When the build is done (green checkmark), click into the workflow run
+2. Scroll to the bottom — there's an **Artifacts** section
+3. Click **k-solar-debug-apk** to download a ZIP
+4. Extract the ZIP — you'll have `app-debug.apk`
+
+### Step 4: Install on your phone
+
+1. Email or send `app-debug.apk` to yourself, open on your phone
+2. Android will warn about "install from unknown source" — allow it for your browser/email app
+3. Tap **Install**
+4. App appears on your home screen as **K-Solar**
+
+## What is and isn't done
+
+**Done in this build:**
+- Native Android shell with K-Solar branding
+- Custom app icon at all 5 Android densities
+- Splash screen with K-Solar logo
+- HTTPS connection to ksolar.online
+- Android 7.0+ target (covers 99%+ of devices)
+
+**Not done — coming in a future update:**
+- Signed for Play Store (currently debug-signed; install directly, not via Play Store)
+- Native GPS plugin (currently uses browser geolocation, which still works fine)
+- Native camera plugin (currently uses file picker)
+- Local file storage for offline calculations
+- Push notifications
+
+**Important caveat:** because the app loads K-Solar from ksolar.online over
+the internet, **it requires an internet connection** to work. If users
+have no connection, they see a "no connection" page. Adding offline
+caching is a separate enhancement.
+
+## Updating the app
+
+Two scenarios:
+
+**Scenario A — You changed the web app (`index.html`)**
+- Just push to GitHub. Vercel deploys, ksolar.online updates immediately.
+- The Android app auto-loads the new version next time someone opens it.
+- No APK rebuild needed.
+
+**Scenario B — You changed something native (icons, app name, min Android version)**
+- Edit the files in `android-app/`
+- Push to GitHub — the workflow auto-triggers
+- Download the new APK
+- Distribute to users (they uninstall old + install new, or you set up an in-app updater later)
+
+## Distributing to Play Store later
+
+For Play Store, you need to:
+1. Get a Google Play Developer account ($25 one-time)
+2. Generate a release-signing keystore (we'll do this together)
+3. Build a signed AAB (Android App Bundle) instead of a debug APK
+4. Create the store listing (screenshots, description, privacy policy)
+5. Upload and submit for review
+
+That's a separate session — let me know when you're ready.
+
+## Troubleshooting
+
+**Build fails in GitHub Actions:**
+- Click on the failed step, read the error
+- Most common: missing dependency, fixed by re-running the workflow
+
+**APK installs but app shows blank screen:**
+- ksolar.online might be down — open it in a browser to check
+- Check Vercel deployment status
+
+**App icon looks wrong:**
+- Rerun the build — icons regenerate from `android-resources/` each time
