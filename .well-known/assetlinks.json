@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "online.ksolar.app",
+    "sha256_cert_fingerprints": ["27:5F:1E:7D:C5:38:54:56:A8:56:02:2F:CD:72:C8:55:6C:8D:55:86:55:FD:89:8A:F1:6E:C0:81:D6:F8:06:CA"]
+  }
+}]
